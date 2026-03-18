@@ -5,33 +5,42 @@ import com.learningRepo.learningRepo.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("user")
+@RequestMapping("/user")
 public class UserController {
 
     @Autowired
     private UserService userService;
 
-    @PostMapping("")
-    public ResponseEntity<?> createUser(@RequestBody User userData){
-        userService.saveUser(userData);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
-    }
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
-    public ResponseEntity<?> updateUser(@RequestBody User userData){
-        User user = userService.findUserByName(userData.getUserName());
-        if(user != null){
-            user.setUserName(userData.getUserName());
-            user.setEmail(userData.getEmail());
-            user.setPassword(userData.getPassword());
+    @PutMapping
+    public ResponseEntity<?> updateUser(@RequestBody User request) {
 
-            userService.saveUser(user);
-        } else {
-            return ResponseEntity.noContent().build();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        User user = userService.findUserByName(username)
+                .orElseThrow(() ->
+                        new UsernameNotFoundException("User not found with username: " + username)
+                );
+
+        user.setEmail(request.getEmail());
+
+        if (!request.getPassword().isBlank()) {
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
         }
-        return ResponseEntity.accepted().build();
+
+        userService.saveNewUser(user);
+
+        return ResponseEntity.ok("User updated successfully");
     }
 
     @GetMapping

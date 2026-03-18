@@ -2,6 +2,7 @@ package com.learningRepo.learningRepo.entity;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -11,7 +12,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Setter
 public class DataEntityV2 {
     @Id
-    private String id;
+    private ObjectId id;
 
     private String message;
     private String type;
